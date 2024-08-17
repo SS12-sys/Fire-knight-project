@@ -1,0 +1,50 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f0f0;
+}
+
+.ventana {
+  width: 300px;
+  height: auto;
+  background-color: #fff;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4CAF50;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #3e8e41;
+}
