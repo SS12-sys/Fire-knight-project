@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 import random
-import subprocess
+import webbrowser
 
 # Simulación de almacenamiento de cuentas (10 slots)
 cuentas = {}
@@ -75,7 +75,6 @@ def abrir_menu_inicio():
 
     frases_version = ["beta", "1.2.2", "1.0.0", "Early Access", "Demo"]
 
-    # Asegúrate de que frases_version no esté vacío
     if frases_version:
         frase_actual = random.choice(frases_version)
     else:
@@ -84,7 +83,7 @@ def abrir_menu_inicio():
     tk.Label(menu_ventana, text="Fire Knight", font=("Arial", 20)).pack(pady=10)
     tk.Label(menu_ventana, text=frase_actual, font=("Arial", 10)).pack(pady=5)
     
-    opciones = ["Jugar", "Configuraciones", "Salir"]
+    opciones = ["Jugar", "Configuraciones", "Iniciar Mundo", "Salir"]
     for opcion in opciones:
         tk.Button(menu_ventana, text=opcion, command=lambda o=opcion: seleccionar_opcion(o, menu_ventana)).pack(pady=5)
 
@@ -96,6 +95,9 @@ def seleccionar_opcion(opcion, ventana):
     elif opcion == "Configuraciones":
         ventana.destroy()
         abrir_ventana_configuracion()
+    elif opcion == "Iniciar Mundo":
+        ventana.destroy()
+        iniciar_mundo()
     elif opcion == "Salir":
         ventana.destroy()
 
@@ -124,17 +126,14 @@ def abrir_ventana_configuracion():
         config_ventana.destroy()
         abrir_menu_inicio()
 
-    # Volumen
     tk.Label(config_ventana, text="Volumen").pack(pady=5)
     volumen_var = tk.IntVar(value=config["volumen"])
     tk.Scale(config_ventana, from_=0, to=100, orient="horizontal", variable=volumen_var).pack(pady=5)
 
-    # Pantalla Completa
     tk.Label(config_ventana, text="Pantalla Completa").pack(pady=5)
     pantalla_completa_var = tk.BooleanVar(value=config["pantalla_completa"])
     tk.Checkbutton(config_ventana, variable=pantalla_completa_var, text="Activar Pantalla Completa").pack(pady=5)
 
-    # Teclas de Control
     tk.Label(config_ventana, text="Teclas de Control").pack(pady=10)
     
     def crear_control(texto, variable):
@@ -165,6 +164,31 @@ def abrir_ventana_configuracion():
     tk.Button(config_ventana, text="Volver al Menú", command=volver_al_menu).pack(pady=10)
 
     config_ventana.mainloop()
+
+def iniciar_mundo():
+    mundo_ventana = tk.Tk()
+    mundo_ventana.title("Mundo - Fire Knight")
+
+    tk.Label(mundo_ventana, text="Bienvenido al Mundo", font=("Arial", 20)).pack(pady=10)
+
+    # Aquí puedes agregar más elementos específicos del mundo
+    tk.Label(mundo_ventana, text="Mundo iniciado con éxito.", font=("Arial", 14)).pack(pady=20)
+
+    def abrir_youtube():
+        webbrowser.open("https://www.youtube.com/@Chill.1290/featured")
+
+    def abrir_facebook():
+        webbrowser.open("https://www.facebook.com/")
+
+    def volver_al_menu():
+        mundo_ventana.destroy()
+        abrir_menu_inicio()
+
+    tk.Button(mundo_ventana, text="Ir a YouTube", command=abrir_youtube).pack(pady=5)
+    tk.Button(mundo_ventana, text="Ir a Facebook", command=abrir_facebook).pack(pady=5)
+    tk.Button(mundo_ventana, text="Volver al Menú", command=volver_al_menu).pack(pady=10)
+
+    mundo_ventana.mainloop()
 
 # Iniciar la aplicación
 iniciar_juego()
