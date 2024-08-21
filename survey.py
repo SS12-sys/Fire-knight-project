@@ -1,194 +1,258 @@
-import tkinter as tk
-from tkinter import messagebox
-import random
-import webbrowser
+import pygame
+import sys
+import time
 
-# Simulación de almacenamiento de cuentas (10 slots)
-cuentas = {}
+pygame.init()
 
-# Variables globales para configuraciones
-config = {
-    "volumen": 50,
-    "pantalla_completa": False,
-    "teclas": {
-        "saltar": "space",
-        "abrir_inventario": "i",
-        "atacar": "a",
-        "poner_bloque": "b",
-        "quitar_bloque": "q",
-        "mover_izquierda": "a",
-        "mover_derecha": "d",
-        "mover_arriba": "w",
-        "mover_abajo": "s"
-    }
+# Configuración de la ventana
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption('Fire Knight')
+
+# Colores
+BLUE = (0, 0, 255)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLACK = (0, 0, 0)
+DARK_GREEN = (0, 100, 0)
+
+# Fuentes
+font = pygame.font.Font(None, 36)
+loading_font = pygame.font.Font(None, 48)
+input_font = pygame.font.Font(None, 28)
+
+# Música
+music_path = 'music.mp3'
+try:
+    pygame.mixer.music.load(music_path)
+    pygame.mixer.music.set_volume(0.5)  # Ajusta el volumen aquí
+    pygame.mixer.music.play(-1)  # Reproduce música en bucle
+    print(f"Música cargada y reproduciendo desde {music_path}")
+except pygame.error as e:
+    print(f"No se pudo cargar la música. Error: {e}")
+
+# Definición de botones
+buttons = {
+    'Multijugador': pygame.Rect(50, 50, 200, 50),
+    'Crear Mundo': pygame.Rect(50, 120, 200, 50),
+    'Configuración': pygame.Rect(50, 190, 200, 50),
+    'Tienda': pygame.Rect(50, 260, 200, 50),
+    'Vestimenta': pygame.Rect(50, 330, 200, 50),
+    'Jugar': pygame.Rect(50, 400, 200, 50)  # Botón para iniciar el juego
 }
 
-def guardar_cuenta(usuario, contrasena):
-    if len(cuentas) < 10:
-        cuentas[usuario] = contrasena
-        return True
-    else:
-        return False
+# Variables globales
+input_text = ""
+active_menu = None
+game_running = False
+player_name = "Nombre del Jugador"
+name_rect = pygame.Rect(10, 10, 200, 30)  # Rectángulo para el nombre del jugador
+name_speed = 5  # Velocidad del movimiento del nombre
+direction = 1  # Dirección del movimiento del nombre (1: derecha, -1: izquierda)
+player_rect = pygame.Rect(WIDTH // 2, HEIGHT // 2, 50, 50)  # Rectángulo para el jugador
+cat_dialog_visible = False
+world_size = None  # Tamaño del mundo
+world_name = ""
 
-def verificar_cuenta(usuario, contrasena):
-    return cuentas.get(usuario) == contrasena
+# Definición del botón de salir
+exit_button = pygame.Rect(WIDTH - 100, HEIGHT - 50, 90, 40)
 
-def iniciar_juego():
-    ventana = tk.Tk()
-    ventana.title("Fire Knight - Registro/Login")
-
-    usuario = tk.StringVar()
-    contrasena = tk.StringVar()
-
-    tk.Label(ventana, text="Usuario").pack()
-    tk.Entry(ventana, textvariable=usuario).pack()
-
-    tk.Label(ventana, text="Contraseña").pack()
-    tk.Entry(ventana, textvariable=contrasena, show="*").pack()
-
-    def registrar():
-        nombre_usuario = usuario.get()
-        clave = contrasena.get()
-        if guardar_cuenta(nombre_usuario, clave):
-            messagebox.showinfo("Registro", "¡Cuenta registrada con éxito!")
-        else:
-            messagebox.showerror("Error", "No se pueden registrar más cuentas. Límite alcanzado.")
-
-    def iniciar_sesion():
-        nombre_usuario = usuario.get()
-        clave = contrasena.get()
-        if verificar_cuenta(nombre_usuario, clave):
-            messagebox.showinfo("Bienvenido", f"¡Bienvenido {nombre_usuario}!")
-            ventana.destroy()
-            abrir_menu_inicio()
-        else:
-            messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
-
-    tk.Button(ventana, text="Registrar", command=registrar).pack()
-    tk.Button(ventana, text="Iniciar Sesión", command=iniciar_sesion).pack()
-
-    ventana.mainloop()
-
-def abrir_menu_inicio():
-    menu_ventana = tk.Tk()
-    menu_ventana.title("Fire Knight")
-
-    frases_version = ["beta", "1.2.2", "1.0.0", "Early Access", "Demo"]
-
-    if frases_version:
-        frase_actual = random.choice(frases_version)
-    else:
-        frase_actual = "Desconocido"
-
-    tk.Label(menu_ventana, text="Fire Knight", font=("Arial", 20)).pack(pady=10)
-    tk.Label(menu_ventana, text=frase_actual, font=("Arial", 10)).pack(pady=5)
+def draw_loading_screen(progress):
+    screen.fill(BLUE)
+    # Barra de carga
+    pygame.draw.rect(screen, WHITE, (WIDTH // 4, HEIGHT // 2, WIDTH // 2, 50))
+    pygame.draw.rect(screen, GREEN, (WIDTH // 4, HEIGHT // 2, (WIDTH // 2) * progress, 50))
     
-    opciones = ["Jugar", "Configuraciones", "Iniciar Mundo", "Salir"]
-    for opcion in opciones:
-        tk.Button(menu_ventana, text=opcion, command=lambda o=opcion: seleccionar_opcion(o, menu_ventana)).pack(pady=5)
-
-    menu_ventana.mainloop()
-
-def seleccionar_opcion(opcion, ventana):
-    if opcion == "Jugar":
-        messagebox.showinfo("Información", "Funcionalidad no implementada aún.")
-    elif opcion == "Configuraciones":
-        ventana.destroy()
-        abrir_ventana_configuracion()
-    elif opcion == "Iniciar Mundo":
-        ventana.destroy()
-        iniciar_mundo()
-    elif opcion == "Salir":
-        ventana.destroy()
-
-def abrir_ventana_configuracion():
-    config_ventana = tk.Tk()
-    config_ventana.title("Configuración")
-
-    def guardar_configuracion():
-        try:
-            config["volumen"] = volumen_var.get()
-            config["pantalla_completa"] = pantalla_completa_var.get()
-            config["teclas"]["saltar"] = tecla_saltar_var.get()
-            config["teclas"]["abrir_inventario"] = tecla_abrir_inventario_var.get()
-            config["teclas"]["atacar"] = tecla_atacar_var.get()
-            config["teclas"]["poner_bloque"] = tecla_poner_bloque_var.get()
-            config["teclas"]["quitar_bloque"] = tecla_quitar_bloque_var.get()
-            config["teclas"]["mover_izquierda"] = tecla_mover_izquierda_var.get()
-            config["teclas"]["mover_derecha"] = tecla_mover_derecha_var.get()
-            config["teclas"]["mover_arriba"] = tecla_mover_arriba_var.get()
-            config["teclas"]["mover_abajo"] = tecla_mover_abajo_var.get()
-            messagebox.showinfo("Configuración", "Configuraciones guardadas con éxito!")
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo guardar la configuración: {e}")
-
-    def volver_al_menu():
-        config_ventana.destroy()
-        abrir_menu_inicio()
-
-    tk.Label(config_ventana, text="Volumen").pack(pady=5)
-    volumen_var = tk.IntVar(value=config["volumen"])
-    tk.Scale(config_ventana, from_=0, to=100, orient="horizontal", variable=volumen_var).pack(pady=5)
-
-    tk.Label(config_ventana, text="Pantalla Completa").pack(pady=5)
-    pantalla_completa_var = tk.BooleanVar(value=config["pantalla_completa"])
-    tk.Checkbutton(config_ventana, variable=pantalla_completa_var, text="Activar Pantalla Completa").pack(pady=5)
-
-    tk.Label(config_ventana, text="Teclas de Control").pack(pady=10)
+    # Texto superior
+    title_text = loading_font.render('Cargando Juego', True, WHITE)
+    screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, 50))
     
-    def crear_control(texto, variable):
-        tk.Label(config_ventana, text=texto).pack(pady=2)
-        tk.Entry(config_ventana, textvariable=variable).pack(pady=2)
+    # Texto de progreso
+    progress_text = font.render(f'{int(progress * 100)}%', True, WHITE)
+    screen.blit(progress_text, (WIDTH // 2 - progress_text.get_width() // 2, HEIGHT // 2 + 60))
+    
+    pygame.display.flip()
 
-    tecla_saltar_var = tk.StringVar(value=config["teclas"]["saltar"])
-    tecla_abrir_inventario_var = tk.StringVar(value=config["teclas"]["abrir_inventario"])
-    tecla_atacar_var = tk.StringVar(value=config["teclas"]["atacar"])
-    tecla_poner_bloque_var = tk.StringVar(value=config["teclas"]["poner_bloque"])
-    tecla_quitar_bloque_var = tk.StringVar(value=config["teclas"]["quitar_bloque"])
-    tecla_mover_izquierda_var = tk.StringVar(value=config["teclas"]["mover_izquierda"])
-    tecla_mover_derecha_var = tk.StringVar(value=config["teclas"]["mover_derecha"])
-    tecla_mover_arriba_var = tk.StringVar(value=config["teclas"]["mover_arriba"])
-    tecla_mover_abajo_var = tk.StringVar(value=config["teclas"]["mover_abajo"])
+def draw_menu():
+    screen.fill(BLUE)
+    for name, rect in buttons.items():
+        pygame.draw.rect(screen, WHITE, rect)
+        text = font.render(name, True, BLUE)
+        screen.blit(text, (rect.x + 10, rect.y + 10))
+    pygame.draw.rect(screen, WHITE, exit_button)
+    text = font.render('Salir', True, BLUE)
+    screen.blit(text, (exit_button.x + 10, exit_button.y + 10))
+    pygame.display.flip()
 
-    crear_control("Saltar", tecla_saltar_var)
-    crear_control("Abrir Inventario", tecla_abrir_inventario_var)
-    crear_control("Atacar", tecla_atacar_var)
-    crear_control("Poner Bloque", tecla_poner_bloque_var)
-    crear_control("Quitar Bloque", tecla_quitar_bloque_var)
-    crear_control("Mover Izquierda", tecla_mover_izquierda_var)
-    crear_control("Mover Derecha", tecla_mover_derecha_var)
-    crear_control("Mover Arriba", tecla_mover_arriba_var)
-    crear_control("Mover Abajo", tecla_mover_abajo_var)
+def draw_world_size_menu():
+    screen.fill(GREEN)
+    pygame.draw.rect(screen, WHITE, (50, 50, 300, 50))
+    text = font.render('Elige el tamaño del mundo:', True, BLUE)
+    screen.blit(text, (60, 60))
+    
+    pygame.draw.rect(screen, WHITE, (50, 120, 100, 50))
+    text = font.render('Grande', True, BLUE)
+    screen.blit(text, (60, 130))
+    pygame.draw.rect(screen, WHITE, (200, 120, 100, 50))
+    text = font.render('Pequeño', True, BLUE)
+    screen.blit(text, (210, 130))
+    pygame.draw.rect(screen, WHITE, (50, 190, 100, 50))
+    text = font.render('Normal', True, BLUE)
+    screen.blit(text, (60, 200))
+    
+    pygame.display.flip()
 
-    tk.Button(config_ventana, text="Guardar Configuración", command=guardar_configuracion).pack(pady=10)
-    tk.Button(config_ventana, text="Volver al Menú", command=volver_al_menu).pack(pady=10)
+def draw_name_input_menu():
+    screen.fill(GREEN)
+    pygame.draw.rect(screen, WHITE, (50, 50, 300, 50))
+    text = font.render('Ingresa el nombre del mundo:', True, BLUE)
+    screen.blit(text, (60, 60))
+    
+    # Campo de entrada para el nombre del mundo
+    input_surface = input_font.render(input_text, True, WHITE)
+    screen.blit(input_surface, (60, 100))
+    pygame.draw.rect(screen, WHITE, (60, 100, 300, 30), 2)
+    
+    pygame.draw.rect(screen, WHITE, (50, 150, 100, 50))
+    text = font.render('Crear', True, BLUE)
+    screen.blit(text, (60, 160))
+    pygame.draw.rect(screen, WHITE, (200, 150, 100, 50))
+    text = font.render('Volver', True, BLUE)
+    screen.blit(text, (210, 160))
+    
+    pygame.display.flip()
 
-    config_ventana.mainloop()
+def draw_game():
+    global player_rect, name_rect, direction, world_size, world_name
+    
+    screen.fill(GREEN)
+    
+    # Dibujar árboles
+    for _ in range(10):  # Ajusta el número de árboles según lo necesites
+        tree_x = pygame.randint(0, WIDTH - 40)
+        tree_y = pygame.randint(0, HEIGHT - 40)
+        pygame.draw.rect(screen, DARK_GREEN, (tree_x, tree_y, 40, 40))  # Tronco
+        pygame.draw.rect(screen, GREEN, (tree_x - 10, tree_y - 20, 60, 20))  # Hojas
+    
+    # Dibuja al jugador
+    pygame.draw.rect(screen, WHITE, player_rect)  # Puedes usar una imagen en lugar de un rectángulo si lo prefieres
+    
+    # Mover el nombre del jugador
+    name_surface = font.render(player_name, True, WHITE)
+    screen.blit(name_surface, name_rect.topleft)
+    
+    # Actualizar posición del nombre del jugador
+    name_rect.x += direction * name_speed
+    if name_rect.right > WIDTH or name_rect.left < 0:
+        direction *= -1
 
-def iniciar_mundo():
-    mundo_ventana = tk.Tk()
-    mundo_ventana.title("Mundo - Fire Knight")
+    if cat_dialog_visible:
+        pygame.draw.rect(screen, WHITE, (WIDTH // 4, HEIGHT // 4, WIDTH // 2, HEIGHT // 4))  # Cuadro de diálogo
+        dialog_text = font.render("Bienvenido aventurero esto es Fire Knight. Aquí tenemos beta, no hay mucho porque lo estamos haciendo, así que disfruta.", True, BLACK)
+        screen.blit(dialog_text, (WIDTH // 4 + 10, HEIGHT // 4 + 10))
+    
+    pygame.display.flip()
 
-    tk.Label(mundo_ventana, text="Bienvenido al Mundo", font=("Arial", 20)).pack(pady=10)
+def handle_input(event):
+    global input_text, active_menu, game_running, player_rect, cat_dialog_visible
+    global world_size, world_name
+    
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_ESCAPE:  # Salir del menú activo
+            active_menu = None
+        elif event.key == pygame.K_RETURN:
+            if active_menu == 'Crear Mundo' and not game_running:
+                active_menu = 'WorldSize'
+            elif active_menu == 'WorldSize':
+                if world_size:
+                    active_menu = 'NameInput'
+            elif active_menu == 'NameInput':
+                if input_text:
+                    world_name = input_text
+                    active_menu = None
+                    game_running = True
+        elif event.key == pygame.K_BACKSPACE:
+            input_text = input_text[:-1]  # Eliminar el último carácter
+        elif event.key == pygame.K_TAB:
+            active_menu = None  # Volver al menú principal
+        elif event.key == pygame.K_c:
+            # Mostrar o ocultar el cuadro de diálogo del gato
+            cat_dialog_visible = not cat_dialog_visible
+        elif event.key == pygame.K_w:
+            player_rect.y -= 5  # Mover el jugador hacia arriba
+        elif event.key == pygame.K_s:
+            player_rect.y += 5  # Mover el jugador hacia abajo
+        elif event.key == pygame.K_a:
+            player_rect.x -= 5  # Mover el jugador hacia la izquierda
+        elif event.key == pygame.K_d:
+            player_rect.x += 5  # Mover el jugador hacia la derecha
+    
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        x, y = event.pos
+        if buttons['Jugar'].collidepoint(x, y):
+            draw_loading_screen(0.0)
+            for i in range(101):
+                draw_loading_screen(i / 100.0)
+                time.sleep(0.01)  # Simular carga
+            active_menu = 'WorldSize'
+        elif exit_button.collidepoint(x, y):
+            pygame.quit()
+            sys.exit()
+        elif active_menu == 'WorldSize':
+            if pygame.Rect(50, 120, 100, 50).collidepoint(x, y):
+                world_size = 'Grande'
+                active_menu = 'NameInput'
+            elif pygame.Rect(200, 120, 100, 50).collidepoint(x, y):
+                world_size = 'Pequeño'
+                active_menu = 'NameInput'
+            elif pygame.Rect(50, 190, 100, 50).collidepoint(x, y):
+                world_size = 'Normal'
+                active_menu = 'NameInput'
+        elif active_menu == 'NameInput':
+            if pygame.Rect(50, 150, 100, 50).collidepoint(x, y):
+                if input_text:
+                    world_name = input_text
+                    active_menu = None
+                    game_running = True
+            elif pygame.Rect(200, 150, 100, 50).collidepoint(x, y):
+                active_menu = None
+        elif not active_menu:
+            for name, rect in buttons.items():
+                if rect.collidepoint(x, y):
+                    active_menu = name
+                    break
 
-    # Aquí puedes agregar más elementos específicos del mundo
-    tk.Label(mundo_ventana, text="Mundo iniciado con éxito.", font=("Arial", 14)).pack(pady=20)
+def main():
+    global game_running, active_menu
 
-    def abrir_youtube():
-        webbrowser.open("https://www.youtube.com/@Chill.1290/featured")
+    # Pantalla de carga inicial
+    while not game_running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            handle_input(event)
 
-    def abrir_facebook():
-        webbrowser.open("https://www.facebook.com/")
+        if active_menu:
+            if active_menu == 'WorldSize':
+                draw_world_size_menu()
+            elif active_menu == 'NameInput':
+                draw_name_input_menu()
+            else:
+                draw_menu()
+        else:
+            draw_menu()
 
-    def volver_al_menu():
-        mundo_ventana.destroy()
-        abrir_menu_inicio()
+    # Juego
+    while game_running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            handle_input(event)
+        
+        draw_game()
 
-    tk.Button(mundo_ventana, text="Ir a YouTube", command=abrir_youtube).pack(pady=5)
-    tk.Button(mundo_ventana, text="Ir a Facebook", command=abrir_facebook).pack(pady=5)
-    tk.Button(mundo_ventana, text="Volver al Menú", command=volver_al_menu).pack(pady=10)
-
-    mundo_ventana.mainloop()
-
-# Iniciar la aplicación
-iniciar_juego()
+if __name__ == "__main__":
+    main()
